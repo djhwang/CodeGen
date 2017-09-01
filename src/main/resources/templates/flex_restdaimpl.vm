@@ -1,0 +1,196 @@
+## RestDAImpl.vm
+#set($voPackage="${env.voPackage}")
+#set($voClassName="${class.pcName}VO")
+#set($daPackage="${env.daPackage}")
+#set($daInterfaceName="I${class.pcName}DA")
+#set($daClassName="${class.pcName}RestDAImpl")
+##
+##
+#set($insertMethodName="insertItem")
+#set($updateMethodName="updateItem")
+#set($deleteMethodName="deleteItem")
+#set($selectMethodName="selectItem")
+##
+##
+/**
+ * @Class Name : ${daClassName}.as
+ * @Description : RESTful Data Access Implementation of Distribution Interface
+ * @Modification Information
+ *
+ * @author ${env.author}
+ * @since ${env.createDate}
+ * @version 1.0
+ * @see
+ *  
+ *  Copyright ⓒ 2011 LG Electronics. all right reserved.
+ */
+
+package ${daPackage}
+{
+    import com.adobe.serialization.json.JSON;
+    import mx.rpc.events.FaultEvent;
+    import mx.rpc.events.ResultEvent;
+    import mx.rpc.http.HTTPService;
+    
+    import com.lge.supersign.common.commonPath;
+    
+    public class ${daClassName} implements ${daInterfaceName}{
+        private var _restURI:String;
+        private var _successOperation:Function;
+        private var _faultOperation:Function;
+        private var _httpRequest:HTTPService;
+        private var _commonPath:commonPath = new commonPath();
+        
+
+        /**
+         * Constructor
+         */
+        public function ${daClassName}(_connectionURI:String) {
+            _restURI = _connectionURI;
+            _httpRequest = new HTTPService();
+        }
+
+        /**
+         * The method to resolve URI
+         */
+        public function resolveURI(_endURI:String):String{
+            //return "http://localhost:8080/SuperSignElite-w/rest/"+_endURI;
+            //return "http://localhost:8080/SuperSignElite-w/rest/player?_method=get";
+            //return "http://localhost:8080/SuperSignElite-w/rest/player";
+            //return _commonPath._playerRestURI; 
+            return "test";
+        }
+        
+        ///////////////////////////The Method to insert Contents from Server by using RESTful Service///////////////
+        public function $insertMethodName(_vo:Object, insertResultEventHandler:Function, insertFaultEventHandler:Function):void{
+            var _encodedData:Object = JSON.encode(_vo);
+            //_httpRequest.url = _commonPath._playerRestURI;
+            _httpRequest.method="POST";
+            _httpRequest.contentType="application/json";
+            _httpRequest.headers ={accept : "application/json", Authorization : "Basic Mjoy"};
+            _httpRequest.addEventListener("result", insertSuccessEventHandler);
+            _httpRequest.addEventListener("fault", insertFailEventHandler);
+            _successOperation = insertResultEventHandler;
+            _faultOperation = insertFaultEventHandler; 
+            try{
+                _httpRequest.send(_encodedData);
+            }catch(error:Error){
+                trace("Error message for Http Request to insert data on Server :"+error.message);
+            }
+        }
+        
+        ////////////////////////////Result Event Handler for insertItem/////////////////////////////
+        public function insertSuccessEventHandler(event:ResultEvent):void{
+            var _result : String = String(event.result);
+            _successOperation(_result);
+            _httpRequest.removeEventListener(ResultEvent.RESULT, insertSuccessEventHandler);
+        }
+        
+        ////////////////////////////Fault Event Handler for insertItem//////////////////////////////
+        public function insertFailEventHandler(event:FaultEvent):void{
+            var _fault : String = String(event.message);
+            _faultOperation(_fault);
+            _httpRequest.removeEventListener(FaultEvent.FAULT, insertFailEventHandler);
+        }
+        
+        ///////////////////////////The Method to update Contents from Server by using RESTful Service///////////////
+        public function updateItem(_vo:Object, _idx:int, updateResultEventHandler:Function, updateFaultEventHandler:Function):void{
+            var _encodedData:Object = JSON.encode(_vo);
+            //_httpRequest.url = _commonPath._playerRestURI+"/"+_idx+"?_method=put";
+            _httpRequest.method = "POST";
+            _httpRequest.contentType = "application/json";
+            _httpRequest.headers = {accept:"application/json", Authorization:"Basic Mjoy"};
+            _httpRequest.addEventListener("result", updateSuccessEventHandler);
+            _httpRequest.addEventListener("fault", updateFailEventHandler);
+            _successOperation = updateResultEventHandler;
+            _faultOperation = updateFaultEventHandler;
+            try{
+                _httpRequest.send(_encodedData);
+            }catch(error:Error){
+                trace("Error message for Http Request to update data on Server"+error.message);
+            }
+        }
+        
+        ////////////////////////////Result Event Handler for updateIteem/////////////////////////////
+        public function updateSuccessEventHandler(event:ResultEvent):void{
+            var _result : String = String(event.result);
+            _successOperation(_result);
+            _httpRequest.removeEventListener(ResultEvent.RESULT, updateSuccessEventHandler);
+        }
+        
+        ////////////////////////////Fault Event Handler for updateItem/////////////////////////////
+        public function updateFailEventHandler(event:FaultEvent):void{
+            var _fault : String = String(event.message);
+            _faultOperation(_fault);
+            _httpRequest.removeEventListener(FaultEvent.FAULT, updateFailEventHandler);
+        }
+        
+        ///////////////////////////The Method to delete Contents from Server by using RESTful Service///////////////
+        public function deleteItem(_idx:int, deleteResultEventHandler:Function, deleteFaultEventHandler:Function):void{
+            //_httpRequest.url = _commonPath._playerRestURI+"/"+_idx+"?_method=delete";
+            _httpRequest.method="POST";
+            _httpRequest.contentType="application/json";
+            _httpRequest.headers = {accept:"application/json", Authorization:"Basic Mjoy"};
+            _httpRequest.addEventListener("result", deleteSuccessEventHandler);
+            _httpRequest.addEventListener("fault", deleteFailEventHandler);
+            _successOperation = deleteResultEventHandler;
+            _faultOperation = deleteFaultEventHandler;
+            try{
+                _httpRequest.send();
+            }catch(error:Error){
+                trace("Error message for Http Request to delete data on Server"+error.message);
+            }
+        }
+        
+        ////////////////////////////Result Event Handler for deleteIteem/////////////////////////////
+        public function deleteSuccessEventHandler(event:ResultEvent):void{
+            var _result : String = String(event.result);
+            _successOperation(_result);
+            _httpRequest.removeEventListener(ResultEvent.RESULT, deleteSuccessEventHandler);
+        }
+        
+        ////////////////////////////Fault Event Handler for deleteItem/////////////////////////////
+        public function deleteFailEventHandler(event:FaultEvent):void{
+            var _fault : String = String(event.message);
+            _faultOperation(_fault);
+            _httpRequest.removeEventListener(FaultEvent.FAULT, deleteFailEventHandler);
+        }
+        
+        /**
+         * ${class.name}을 조회한다.
+         * @param vo - 조회할 정보가 담긴 $voClassName
+         * @return 조회한 ${class.name}
+         * @exception Exception
+         */
+        public function $selectMethodName(resultEventHandler:Function, faultEventHandler:Function):void {
+            _httpRequest.method = "POST";
+            _httpRequest.contentType="application/json";
+            _httpRequest.headers ={accept : "application/json", Authorization : "Basic Mjoy"};
+            _httpRequest.addEventListener("result", selectResultEventHandler);
+            _httpRequest.addEventListener("fault", selectFaultEventHandler);
+            _successOperation = resultEventHandler;
+            _faultOperation = faultEventHandler;
+            
+            try{
+                _httpRequest.send();
+            }catch(error:Error){
+                trace("Error message for HTTP Request : "+error);
+            }
+        }
+        
+        ////////////////////////////Result Event Handler for selectItem////////////////////// 
+        public function selectResultEventHandler(event:ResultEvent):void{
+            var result:String = String(event.result);
+            var decodedData:Object = JSON.decode(result);
+            var arr:Array = decodedData.members as Array;
+            _successOperation(arr);
+            _httpRequest.removeEventListener(ResultEvent.RESULT, selectResultEventHandler);
+        }
+        
+        ////////////////////////////Fault Event Handler for selectItem///////////////////////
+        public function selectFaultEventHandler(event:FaultEvent):void{
+            _faultOperation(event);
+            _httpRequest.removeEventListener(FaultEvent.FAULT, selectFaultEventHandler);
+        }
+    }
+}

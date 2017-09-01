@@ -1,0 +1,89 @@
+## flex_Controller.vm
+##
+#set($servicePackage="${env.servicePackage}")
+#set($serviceClassName="${class.pcName}Service")
+#set($serviceInstanceName="_${class.ccName}Service")
+#set($controllerPackage="${env.controllerPackage}")
+#set($controllerClassName="${class.pcName}Controller")
+##
+#set($insertMethodName="insertItem")
+#set($updateMethodName="updateItem")
+#set($deleteMethodName="deleteItem")
+#set($selectMethodName="selectItem")
+##
+##
+/**
+ * @Class Name : ${controllerClassName}.as
+ * @Description : ${class.pcName} Controller Class
+ * @Modification Information
+ *
+ * @author ${env.author}
+ * @since ${env.createDate}
+ * @version 1.0
+ * @see
+ *  
+ *  Copyright ⓒ 2011 LG Electronics. all right reserved.
+*/
+    
+package ${controllerPackage}
+{
+    import flash.data.SQLResult;
+    import flash.events.Event;
+    import flash.events.SQLErrorEvent;
+    import flash.events.SQLEvent;
+    import mx.controls.Alert;
+    import mx.rpc.events.FaultEvent;
+    import mx.rpc.events.ResultEvent;
+    import ${servicePackage}.${serviceClassName};
+  
+    public class ${controllerClassName}
+    {
+        private var _getContentsSuccessOperation:Function;
+        private var _getContentsFailOperation:Function;
+        private var ${serviceInstanceName}:${serviceClassName};
+
+
+        /**
+         * Contstructor
+         */
+        public function ${controllerClassName}()
+        {
+            ${serviceInstanceName} = new ${serviceClassName}();
+        }
+        
+        ///////////////////Method of getting Contents////////////////////////////////////////////////////
+        public function selectOperation(resultEventHandler:Function, faultEventHandler:Function):void{
+            _getContentsSuccessOperation = resultEventHandler;
+            _getContentsFailOperation = faultEventHandler;
+            ${serviceInstanceName}.selectOperation(selectResultEventHandler, selectFaultEventHandler);
+        }       
+        
+        ///////////////////Event Handler Method of Select Result From Remoted Server///////////////////////
+        public function selectResultEventHandler(_event:Object):void{
+            _getContentsSuccessOperation(_event);
+            trace("Event Result of maibox Controller : "+_event);
+        }
+        
+        //////////////////Event Handler Method of Select Fault From Remoted Server//////////////////////////
+        
+        public function selectFaultEventHandler(event:FaultEvent):void{
+            _getContentsFailOperation(event);
+            trace("Event Fault of player Controller : "+event.fault);
+        }
+        
+        ///////////////////Method of insert Contents ////////////////////////////////////////////////////
+        public function insertOperation(_vo:Object):void{
+            ${serviceInstanceName}.insertOperation(_vo);
+        }
+        
+        ///////////////////Method of update Contents ////////////////////////////////////////////////////
+        public function updateOperation(_vo:Object, _idx:int):void{
+            ${serviceInstanceName}.updateOperation(_vo, _idx);
+        }
+        
+        ///////////////////Method of delete Contents ////////////////////////////////////////////////////
+        public function deleteOperation(_idx:int):void{
+            ${serviceInstanceName}.deleteOperation(_idx);
+        }
+    }
+}

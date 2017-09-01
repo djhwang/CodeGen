@@ -1,0 +1,62 @@
+## IDA.vm
+#set($daPackage="${env.daPackage}")
+#set($daInterfaceName="I${class.pcName}DA")
+##
+##
+#set($insertMethodName="insertItem")
+#set($updateMethodName="updateItem")
+#set($deleteMethodName="deleteItem")
+#set($selectMethodName="selectItem")
+##
+##
+/**
+ * @Class Name : ${daInterfaceName}.as
+ * @Description : ${class.pcName} Data Access Interface
+ * @Modification Information
+ *
+ * @author ${env.author}
+ * @since ${env.createDate}
+ * @version 1.0
+ * @see
+ *  
+ *  Copyright ⓒ 2011 LG Electronics. all right reserved.
+ */
+
+package $daPackage
+{
+    public interface $daInterfaceName {
+        
+        /**
+         * ${class.name}을 등록한다.
+         * @param vo - 등록할 정보가 담긴 $voClassName
+         * @return void
+         * @exception Exception
+         */
+        function $insertMethodName(_vo:Object, insertResultEventHandler:Function, insertFalutEventHandler:Function):void;
+        
+        /**
+         * ${class.name}을 수정한다.
+         * @param _vo - 수정할 정보가 담긴 $voClassName
+         * @param _idx - 
+         * @return void
+         * @exception Exception
+         */
+        function $updateMethodName(_vo:Object, _idx:int, updateEventHandler:Function, updateFalutEventHandler:Function):void;
+        
+        /**
+         * ${class.name}을 삭제한다.
+         * @param _int - 삭제할 정보가 담긴 $voClassName
+         * @return void
+         * @exception Exception
+         */
+        function $deleteMethodName(_idx:int, deleteResultEventHandler:Function, deleteFalutEventHandler:Function):void;
+        
+        /**
+         * ${class.name}을 조회한다.
+         * @param vo - 조회할 정보가 담긴 $voClassName
+         * @return 조회한 ${class.name}
+         * @exception Exception
+         */
+        function $selectMethodName(resultEventHandler:Function, falutEventHandler:Function):void;
+    }
+}

@@ -1,0 +1,170 @@
+##
+#set($D='$')
+#set($voPackage="${env.servicePackage}")
+#set($voClassName="${class.pcName}VO")
+#set($voInstanceName="${class.ccName}VO")
+##
+##
+#set($listPath="/${class.ccName}/list${class.pcName}.do")
+#set($addViewPath="/${class.ccName}/add${class.pcName}View.do")
+#set($addPath="/${class.ccName}/add${class.pcName}.do")
+#set($selectPath="/${class.ccName}/select${class.pcName}.do")
+#set($updatePath="/${class.ccName}/update${class.pcName}.do")
+#set($updateViewPath="/${class.ccName}/update${class.pcName}View.do")
+#set($deletePath="/${class.ccName}/delete${class.pcName}.do")
+##
+#set($viewPageName="${class.pcName}View.jsp")
+##
+#set($selectFunctionName="fncSelect${class.pcName}")
+#set($addViewFunctionName="fncAdd${class.pcName}View")
+##
+<%@ page contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
+<%@ taglib prefix="validator" uri="http://www.springmodules.org/tags/commons-validator" %>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags"%>
+<%
+ /**
+  * @Class Name : ${viewPageName}
+  * @Description : ${class.pcName} View 화면
+  * @Modification Information
+  * 
+  * @author ${env.author}
+  * @since ${env.createDate}
+  * @version 1.0
+  * @see
+  *  
+  * Copyright ⓒ 2011 LG Electronics. all right reserved.
+  */
+%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+#if($class.primaryKeys.size() > 0)
+#if($class.primaryKeys.get(0).javaType == "int")
+<c:set var="registerFlag" value="${D}{${voInstanceName}.${class.primaryKeys.get(0).ccName} == 0 ? '등록' : '수정'}"/>
+#elseif($class.primaryKeys.get(0).javaType == "String")
+<c:set var="registerFlag" value="${D}{empty ${voInstanceName}.${class.primaryKeys.get(0).ccName} ? '등록' : '수정'}"/>
+#elseif($class.primaryKeys.get(0).javaType == "Integer")
+<c:set var="registerFlag" value="${D}{empty ${voInstanceName}.${class.primaryKeys.get(0).ccName} ? '등록' : '수정'}"/>
+#end
+#end
+<title> <c:out value="${D}{registerFlag}"/> </title>
+<style type="text/css">
+* { font-size: 9pt }
+</style>
+
+<!--For Commons Validator Client Side-->
+<!-- script type="text/javascript" src="<c:url value='/cmmn/validator.do'/>"></script -->
+<!-- validator:javascript formName="${voInstanceName}" staticJavascript="false" xhtml="true" cdata="false"/ -->
+<script type="text/javascript" src="<c:url value='/js/jquery/jquery-1.4.4.min.js'/>"></script>
+<script type="text/javaScript" language="javascript" defer="defer">
+<!--
+/* 글 목록 화면 function */
+function fn_list() {
+    $("#detailForm").attr("action","<c:url value='${listPath}'/>");
+    $("#detailForm").submit();
+}
+
+/* 글 삭제 function */
+function fn_delete() {
+    $("#detailForm").attr("action","<c:url value='${deletePath}'/>");
+    $("#detailForm").submit();
+}
+
+/* reset */
+function fn_reset() {
+    $("#detailForm")[0].reset();
+    //document.getElementById("detailForm").reset();
+    return;     
+}
+
+/* 글 등록 function */
+function fn_save() {   
+    frm = document.getElementById("detailForm");
+
+    /* TODO Validation기능 보완 */
+    
+    frm.action = "<c:url value="${D}{registerFlag == '등록' ? '${addPath}' : '${updatePath}'}"/>";
+    frm.submit();
+
+}
+
+// -->
+</script>
+</head>
+<body>
+
+<form:form commandName="${voInstanceName}" name="detailForm" id="detailForm" >
+<div id="content_pop">
+    <!-- 타이틀 -->
+    <div id="title">
+        <ul>
+            <li><c:out value="${D}{registerFlag}"/></li>
+        </ul>
+    </div>
+    <!-- // 타이틀 -->
+    <div id="table">
+    <table width="100%" border="1" cellpadding="0" cellspacing="0" >
+        <colgroup>
+            <col width="150"/>
+            <col width=""/>
+        </colgroup>
+            
+        <c:if test="${D}{registerFlag == '수정'}">
+#foreach($attribute in $class.primaryKeys)
+        <tr>
+            <th>${attribute.name} *</th>
+            <td>
+                <form:input path="${attribute.ccName}" cssClass="essentiality" readonly="true" />
+            </td>           
+        </tr>                   
+#end    
+        </c:if>
+        <c:if test="${D}{registerFlag == '등록'}">
+#foreach($attribute in $class.primaryKeys)
+        <tr>
+            <th>${attribute.name} *</th>
+            <td>
+                <form:input path="${attribute.ccName}" cssClass="txt" readonly="false" />
+            </td>           
+        </tr>                   
+#end    
+        </c:if>     
+        
+#foreach($attribute in $class.attributes)
+#if($attribute.primaryKey == false)
+        <tr>
+            <th>${attribute.name}</th>
+            <td>
+                <form:input path="${attribute.ccName}" cssClass="txt"/>
+                &nbsp;<form:errors path="${attribute.ccName}" />
+            </td>
+        </tr>   
+#end
+#end
+    </table>
+  </div>
+    <div id="sysbtn">
+        <table width="100%" border="0" cellpadding="0" cellspacing="0" >
+            <tr>
+                <td align="right">
+                    <a href="javascript:fn_list();">List</a>
+                    <a href="javascript:fn_save();"><c:out value='${D}{registerFlag}'/></a>
+            <c:if test="${D}{registerFlag == '수정'}">
+                    <a href="javascript:fn_delete();">삭제</a>
+            </c:if>
+                    <a href="javascript:fn_reset();">Reset</a>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+<!-- 검색조건 유지 -->
+<input type="hidden" name="searchCondition" value="<c:out value='${D}{searchVO.searchCondition}'/>"/>
+<input type="hidden" name="searchKeyword" value="<c:out value='${D}{searchVO.searchKeyword}'/>"/>
+<input type="hidden" name="pageIndex" value="<c:out value='${D}{searchVO.pageIndex}'/>"/>
+</form:form>
+</body>
+</html>

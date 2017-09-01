@@ -1,0 +1,347 @@
+## LocalDAImpl.vm
+#set($voPackage="${env.voPackage}")
+#set($voClassName="${class.pcName}VO")
+#set($daPackage="${env.daPackage}")
+#set($daInterfaceName="I${class.pcName}DA")
+#set($daClassName="${class.pcName}LocalDAImpl")
+##
+##
+#set($insertMethodName="insertItem")
+#set($updateMethodName="updateItem")
+#set($deleteMethodName="deleteItem")
+#set($selectMethodName="selectItem")
+##
+##
+/**
+ * @Class Name : ${daClassName}.as
+ * @Description : ${class.pcName} Local Data Access Implementation
+ * @Modification Information
+ *
+ * @author ${env.author}
+ * @since ${env.createDate}
+ * @version 1.0
+ * @see
+ *  
+ *  Copyright ⓒ 2011 LG Electronics. all right reserved.
+ */
+
+package ${daPackage}
+{
+    import com.lge.supersign.common.commonPath;
+    import ${voPackage}.${voClassName};
+    
+    import flash.data.SQLConnection;
+    import flash.data.SQLResult;
+    import flash.data.SQLStatement;
+    import flash.errors.SQLError;
+    import flash.events.Event;
+    import flash.events.SQLErrorEvent;
+    import flash.events.SQLEvent;
+    import flash.filesystem.File;
+    
+    import mx.collections.ArrayCollection;
+    import mx.controls.Alert;
+    
+    public class ${daClassName} implements ${daInterfaceName}{
+        private static var _instance:${daClassName};
+        private var _conn:SQLConnection;
+        private var _stmt:SQLStatement;
+        private var _successHandler:Function;
+        private var _failHandler:Function;
+        private var _localdbTable:String;
+        
+        private var _commonPath:CommonPath = new commonPath();
+        
+        
+        /**
+         * Constructor
+         */
+        public function ${daClassName}(pvt:PrivateClass, _localDbResourceURI:String) {
+            _localTable = _localDbResourceURI;
+            connectionDB();
+        }
+
+        /**
+         * Singleton getInstance
+         */
+        public static function getInstance(_localDbResourceURI:String):${daClassName} {
+            if (_instance == null)
+                _instance = new ${daClassName}(new PrivateClass, _localDbResourceURI);
+                
+            return _instance;
+        }
+        
+        /**
+         * DB Connection
+         */
+        private function connectionDB():void{
+            var _dbName:String = "supersign-w-client.db";
+            //var _dbFile:File = File.applicationStorageDirectory.resolvePath(commonPath.getInstance()._guestbookDBPath+_dbName);
+            var _dbFile:File = File.applicationStorageDirectory.resolvePath(_commonPath._guestbookDBPath+_dbName);
+            _conn = new SQLConnection();
+            _stmt = new SQLStatement();
+            _stmt.sqlConnection= _conn;
+            try{ 
+                _conn.open(_dbFile);
+                trace("database open");
+            }catch(error:SQLError){
+                trace("error message:"+error.message);
+                trace("detail error message : "+error.details);
+            }
+        }
+        
+        
+        /**
+         * ${class.name}을 등록한다.
+         * @param vo - 등록할 정보가 담긴 $voClassName
+         * @return void
+         * @exception Exception
+         */
+        public function $insertMethodName(_vo:Object, insertResultEventHandler:Function, insertFaultEventHandler:Function):void {
+            _stmt.clearParameters();
+            
+            _stmt.text = "INSERT INTO ${class.tbName} ("
+#set($i=0)
+#foreach($att in $class.attributes)
+#if($i < ($class.attributes.size() - 1))
+                       + " ${att.name},"
+#else
+                       + " ${att.name}"
+#end
+#set($i=$i+1)
+#end
+#set($i=0)
+                       + " ) VALUES ("
+#foreach($att in $class.attributes)
+#if($i < ($class.attributes.size() - 1))
+                       + " @${att.name},"
+#else
+                       + " @${att.name})";
+#end
+#set($i=$i+1)
+#end
+#foreach($att in $class.attributes)
+            _stmt.parameters["@"${att.name}"]=_vo.${att.ccName};
+#end
+
+            _stmt.addEventListener(SQLEvent.RESULT, insertSuccessEventHandler);
+            _stmt.addEventListener(SQLErrorEvent.ERROR, insertFailEventHandler);
+            _successHandler = insertResultEventHandler;
+            _failHandler = insertFaultEventHandler
+            
+            try {
+                _stmt.execute();
+                trace("insert success");
+            }
+            catch(error:SQLError) {
+                trace("insert fail:" + error.message);
+                trace(error.details);
+            }
+        }
+        
+        /**
+         * Event Handler for insert success
+         */
+        private function insertSuccessEventHandler(event:SQLEvent):void{
+            var _result : SQLResult = _stmt.getResult();
+            var _completeStatus : String = String(_result.complete);
+            _successHandler(_completeStatus);
+            _stmt.removeEventListener(SQLEvent.RESULT, insertSuccessEventHandler);   
+        }
+        
+        /**
+         * Event Handler for insert failure
+         */
+        private function insertFailEventHandler(event:SQLErrorEvent):void{
+            var _error:String = String(event);
+            _failHandler(_error);
+            _stmt.removeEventListener(SQLErrorEvent.ERROR, insertFailEventHandler);
+        }
+        
+        /**
+         * ${class.name}을 수정한다.
+         * @param _vo - 수정할 정보가 담긴 $voClassName
+         * @param _idx - 
+         * @return void
+         * @exception Exception
+         */
+        public function $updateMethodName(_vo:Object, _idx:int, updateResultEventHandler:Function, updateFaultEventHandler:Function):void {
+            _stmt.clearParameters();
+            
+            _stmt.text = "UPDATE ${class.tbName}"
+#set($i=0)
+#foreach($att in $class.attributes)
+#if($i == 0)
+                       + "   SET ${att.name}=@${att.name}"
+#else
+                       + "      ,${att.name}=@${att.name}"
+#end
+#set($i=$i+1)
+#end
+#if($class.primaryKeys.size() > 1)
+#set($i=0)
+#foreach($att in $class.primaryKeys)
+#if($i == 0)
+                       + " WHERE ${att.name}=@${att.name}"
+#elseif($i < ($class.primaryKeys.size() - 1))
+                       + "   AND ${att.name}=@${att.name}"
+#else
+                       + "   AND ${att.name}=@${att.name}";
+#end
+#set($i=$i+1)
+#end
+#elseif($class.primaryKeys.size() == 1)
+                       + " WHERE ${class.primaryKeys.get(0).name}=@${class.primaryKeys.get(0).name}";
+#end
+#foreach($att in $class.attributes)
+            _stmt.parameters["@"${att.name}"]=_vo.${att.ccName};
+#end
+
+            _stmt.addEventListener(SQLEvent.RESULT, updateSuccessHandler);
+            _stmt.addEventListener(SQLErrorEvent.ERROR, updateFailHandler);
+            _successHandler = updateResultEventHandler;
+            _failHandler = updateFaultEventHandler
+            
+            try {
+                _stmt.execute();
+                trace("update success");
+            }
+            catch(error:SQLError) {
+                trace("update fail:" + error.details);
+            }
+        }
+        
+        /**
+         * Event handler for update success
+         */
+        private function updateSuccessHandler(event:SQLEvent):void {
+            var _result : SQLResult = _stmt.getResult();
+            var _completeStatus : String = String(_result.complete);
+            _successHandler(_completeStatus);
+            _stmt.removeEventListener(SQLEvent.RESULT, updateSuccessHandler);
+        }
+        
+        /**
+         * Event handler for update failure
+         */
+        private function updateFailHandler(event:SQLErrorEvent):void{
+            var _error:String = String(event);
+            _failHandler(_error);
+            _stmt.removeEventListener(SQLErrorEvent.ERROR, updateFailHandler);  
+        }
+        
+        /**
+         * ${class.name}을 삭제한다.
+         * @param _int - 삭제할 정보가 담긴 $voClassName
+         * @return void
+         * @exception Exception
+         */
+        public function $deleteMethodName(_idx:int, deleteResultEventHandler:Function, deleteFaultEventHandler:Function):void {
+            _stmt.clearParameters();
+
+            _stmt.text = "DELETE FROM ${class.tbName}"
+#if($class.primaryKeys.size() > 1)
+#set($i=0)
+#foreach($att in $class.primaryKeys)
+#if($i == 0)
+                       + " WHERE ${att.name}=@${att.name}"
+#elseif($i < ($class.primaryKeys.size() - 1))
+                       + "   AND ${att.name}=@${att.name}"
+#else
+                       + "   AND ${att.name}=@${att.name}";
+#end
+#set($i=$i+1)
+#end
+#elseif($class.primaryKeys.size() == 1)
+                       + " WHERE ${class.primaryKeys.get(0).name}=@${class.primaryKeys.get(0).name}";
+#end 
+#foreach($att in $class.primaryKeys)
+            _stmt.parameters["@"${att.name}"] = _idx;;
+#end
+            _stmt.addEventListener(SQLEvent.RESULT, deleteSuccessHandler);
+            _stmt.addEventListener(SQLErrorEvent.ERROR, deleteFailHandler);
+            _successHandler = deleteResultEventHandler;
+            _failHandler = deleteFaultEventHandler;
+            
+            try{
+                _stmt.execute();
+            }catch(error:SQLError){
+                trace("delete error message :"+error.details);
+            }
+        }
+        
+        /**
+         * Event handler for delete success
+         */
+        public function deleteSuccessHandler(event:SQLEvent):void{
+            var _result : SQLResult = _stmt.getResult();
+            var _completeStatus : String = String(_result.complete);
+            _successHandler(_completeStatus);
+            _stmt.removeEventListener(SQLEvent.RESULT, deleteSuccessHandler);
+        }
+        
+        /**
+         * Event handler for delete failure
+         */
+        public function deleteFailHandler(event:SQLErrorEvent):void{
+            var _error:String = String(event);
+            _failHandler(_error);
+            _stmt.removeEventListener(SQLErrorEvent.ERROR, deleteFailHandler);
+        }
+        
+        /**
+         * ${class.name}을 조회한다.
+         * @param vo - 조회할 정보가 담긴 $voClassName
+         * @return 조회한 ${class.name}
+         * @exception Exception
+         */
+        public function $selectMethodName(resultEventHandler:Function, faultEventHandler:Function):void {
+            _stmt.clearParameters();
+            
+            // SQL query
+            _stmt.text = "SELECT * FROM " + _localTable;
+            _stmt.addEventListener(SQLEvent.RESULT, selectSuccessEventHandler);
+            _stmt.addEventListener(SQLErrorEvent.ERROR, selectFailEventHandler);
+            _successHandler = resultEventHandler;
+            _failHandler = faultEventHandler;
+            
+            try {
+                _stmt.execute();
+            }
+            catch(error:SQLError) {
+                trace("fail to get items : " + error.details);
+            }
+        }
+        
+        /**
+         * Event handler for select success
+         */
+        public function selectSuccessEventHandler(_data:Object):void{
+            var _result : SQLResult = _stmt.getResult();
+            var _resultArray :Array = _result.data;
+            var _returnVO:${voClassName} = new ${voClassName}();
+
+            if(_resultArray.length != 0){
+#foreach($att in $class.attributes)
+                _returnVO.${att.name} = _resultArray[0].${att.name};
+#end
+                _successHandler(_returnVO); 
+            }   
+            else{
+                var _emptyMSG:String = "No data in Local DB:"+_localdbTable;
+                _successHandler(_emptyMSG as Object);
+            }
+            
+            _stmt.removeEventListener(SQLEvent.RESULT, selectSuccessEventHandler);
+        }
+        
+        /**
+         * Event handler for select failure
+         */
+        public function selectFailEventHandler(event:SQLErrorEvent):void{
+            _failHandler(event);
+            //Alert.show("select 실패");
+            _stmt.removeEventListener(SQLErrorEvent.ERROR, selectFailEventHandler);
+        }
+    }
+}

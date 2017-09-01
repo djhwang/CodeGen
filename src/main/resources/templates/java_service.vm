@@ -1,0 +1,101 @@
+## Service.vm
+#set($voPackage="${env.voPackage}")
+#set($voClassName="${class.pcName}VO")
+#set($defaultVoClassName="DefaultVO")
+#set($commonPackage="${env.commonPackage}")
+#set($daoPackage="${env.daoPackage}")
+#set($daoClassName="${class.pcName}DAO")
+#set($daoName="${class.ccName}DAO")
+#set($servicePackage="${env.servicePackage}")
+#set($serviceClassName="${class.pcName}Service")
+##
+##
+#set($insertMethodName="insert")
+#set($updateMethodName="update")
+#set($deleteMethodName="delete")
+#set($selectMethodName="select")
+#set($selectListAllMethodName="selectListAll")
+#set($selectListMethodName="selectList")
+#set($selectListTotCntMethodName="selectListTotCnt")
+##
+##
+/**
+ * @Class Name : ${serviceClassName}.java
+ * @Description : ${class.pcName} Business class
+ * @Modification Information
+ *
+ * @author ${env.author}
+ * @since ${env.createDate}
+ * @version 1.0
+ * @see
+ *  
+ *  Copyright ⓒ 2011 LG Electronics. all right reserved.
+ */
+package $servicePackage;
+
+import java.util.List;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import ${commonPackage}.vo.${defaultVoClassName};
+import ${voPackage}.${voClassName};
+
+public interface $serviceClassName {
+    public static Log _logger = LogFactory.getLog(${serviceClassName}.class);
+    
+    /**
+     * ${class.name}을 등록한다.
+     * @param vo - 등록할 정보가 담긴 $voClassName
+     * @return 등록 결과
+     * @exception Exception
+     */
+    int $insertMethodName($voClassName vo) throws Exception;
+    
+    /**
+     * ${class.name}을 수정한다.
+     * @param vo - 수정할 정보가 담긴 $voClassName
+     * @return int형
+     * @exception Exception
+     */
+    int $updateMethodName($voClassName vo) throws Exception;
+    
+    /**
+     * ${class.name}을 삭제한다.
+     * @param vo - 삭제할 정보가 담긴 $voClassName
+     * @return int형 
+     * @exception Exception
+     */
+    int $deleteMethodName($voClassName vo) throws Exception;
+    
+    /**
+     * ${class.name}을 조회한다.
+     * @param vo - 조회할 정보가 담긴 $voClassName
+     * @return 조회한 ${class.name}
+     * @exception Exception
+     */
+    $voClassName $selectMethodName($voClassName vo) throws Exception;
+    
+    /**
+     * ${class.name} 목록을 조회한다.
+     * @param searchVO - 조회할 정보가 담긴 VO
+     * @return ${class.name} 목록
+     * @exception Exception
+     */
+    List $selectListAllMethodName(${defaultVoClassName} searchVO) throws Exception;
+    
+    /**
+     * ${class.name} 목록을 조회한다.
+     * @param searchVO - 조회할 정보가 담긴 VO
+     * @return ${class.name} 목록
+     * @exception Exception
+     */
+    List $selectListMethodName(${defaultVoClassName} searchVO) throws Exception;
+    
+    /**
+     * ${class.name} 총 갯수를 조회한다.
+     * @param searchVO - 조회할 정보가 담긴 VO
+     * @return ${class.name} 총 갯수
+     * @exception
+     */
+    int $selectListTotCntMethodName(${defaultVoClassName} searchVO);
+    
+}

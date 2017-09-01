@@ -1,0 +1,532 @@
+## SQLMap.vm
+#set($voPackage="${env.voPackage}")
+#set($voClassName="${class.pcName}VO")
+#set($defaultVoClassName="DefaultVO")
+#set($commonPackage="${env.commonPackage}")
+#set($resultVOAlias="${class.ccName}VO")
+#set($searchVOAlias="searchVO")
+#set($daoPackage="${env.daoPackage}")
+#set($daoClassName="${class.pcName}DAO")
+#set($daoName="${class.ccName}DAO")
+#set($daoInstanceName="${class.ccName}DAO")
+##
+##
+#set($vendor="$env.dbVendor")
+#set($namespace="$class.pcName")
+#set($resultMapId="${class.ccName}")
+#set($resultMapClass="${env.voPackage}.${voClassName}")
+##
+##
+#set($insertQueryId="${daoInstanceName}.insert${class.pcName}_S")
+#set($updateQueryId="${daoInstanceName}.update${class.pcName}_S")
+#set($deleteQueryId="${daoInstanceName}.delete${class.pcName}_S")
+#set($selectQueryId="${daoInstanceName}.select${class.pcName}_S")
+#set($selectListAllQueryId="${daoInstanceName}.select${class.pcName}ListAll_D")
+#set($selectListQueryId="${daoInstanceName}.select${class.pcName}List_D")
+#set($selectListTotCntQueryId="${daoInstanceName}.select${class.pcName}ListTotCnt_S")
+##
+##
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="$namespace">
+    
+## --------------------------------------------------------------------------------------------------------
+    <typeAlias  alias="${resultVOAlias}" type="${resultMapClass}"/>
+    <typeAlias  alias="${searchVOAlias}" type="${commonPackage}.vo.${defaultVoClassName}"/>
+    
+## --------------------------------------------------------------------------------------------------------
+    <resultMap id="$resultMapId" class="$resultVOAlias">
+#set($i=0)  
+#foreach($attribute in $class.attributes)
+#set($i=$i+1)   
+#if($attribute.javaType == "java.sql.Timestamp")
+        <result property="${attribute.ccName}" column="${attribute.name}" jdbcType="$attribute.type" javaType="$attribute.javaType" columnIndex="$i"/>
+#elseif($attribute.javaType == "java.util.Date")
+        <result property="${attribute.ccName}" column="${attribute.name}" jdbcType="$attribute.type" javaType="$attribute.javaType" columnIndex="$i"/>
+#else
+        <result property="${attribute.ccName}" column="${attribute.name}" columnIndex="$i"/>
+#end
+#end        
+    </resultMap>
+    
+## ##################################################################################################
+    <insert id="${insertQueryId}">
+#if($class.primaryKeys.size() > 0)
+        <selectKey keyProperty="${class.primaryKeys.get(0).ccName}" resultClass="${class.primaryKeys.get(0).javaType}">
+            SELECT nextval('${class.tbName}_seq')
+        </selectKey>
+#end
+        <![CDATA[
+            INSERT INTO ${class.tbName} 
+#set($i=0)  
+#foreach($attribute in $class.attributes)
+#if($i == 0)
+                ( ${attribute.name}
+#elseif($i < ($class.attributes.size() - 1))
+                , ${attribute.name}
+#else
+                , ${attribute.name} )
+#end
+#set($i=$i+1)
+#end
+##
+#set($i=0)  
+#foreach($att in $class.attributes)
+#if($i == 0)
+            VALUES ( #${att.ccName}#
+#elseif($i < ($class.attributes.size() - 1))
+                , #${att.ccName}#
+#else
+                , #${att.ccName}# )
+#end
+#set($i=$i+1)
+#end
+        ]]>
+    </insert>
+    
+## ##################################################################################################   
+    <update id="${updateQueryId}">
+        <![CDATA[
+            UPDATE ${class.tbName}
+#set($i=0)  
+#foreach($attribute in $class.attributes)
+#if($i == 0)
+            SET ${attribute.name}=#${attribute.ccName}#
+#else
+                , ${attribute.name}=#${attribute.ccName}#
+#end
+#set($i=$i+1)
+#end    
+##      
+#set($i=0)  
+#foreach($attribute in $class.primaryKeys)
+#if($i == 0)
+            WHERE ${attribute.name}=#${attribute.ccName}#
+#else
+                AND ${attribute.name}=#${attribute.ccName}#
+#end
+#set($i=$i+1)
+#end
+        ]]>
+    </update>
+    
+## ##################################################################################################
+    <delete id="${deleteQueryId}">
+        <![CDATA[
+            DELETE FROM ${class.tbName} 
+#set($i=0)  
+#foreach($attribute in $class.primaryKeys)
+#if($i == 0)
+            WHERE ${attribute.name}=#${attribute.ccName}#
+#else
+                AND ${attribute.name}=#${attribute.ccName}#
+#end
+#set($i=$i+1)
+#end
+        ]]>
+    </delete>
+    
+## ##################################################################################################   
+    <select id="${selectQueryId}" resultMap="$resultMapId">
+        <![CDATA[
+            SELECT
+#set($i=0)  
+#foreach($attribute in $class.attributes)
+#if($i == 0)
+                ${attribute.name}
+#else
+                , ${attribute.name}
+#end
+#set($i=$i+1)
+#end                
+            FROM ${class.tbName}
+#set($i=0)  
+#foreach($attribute in $class.primaryKeys)
+#if($i == 0)
+            WHERE ${attribute.name}=#${attribute.ccName}#
+#else
+                AND ${attribute.name}=#${attribute.ccName}#
+#end
+#set($i=$i+1)
+#end
+        ]]>
+    </select>
+
+## ##################################################################################################
+    <select id="${selectListAllQueryId}" parameterClass="${searchVOAlias}" resultMap="${resultMapId}">
+#if($vendor == "HSQLDB")
+        SELECT
+#set($i=0)
+#foreach($attribute in $class.attributes)
+#if($i == 0)
+            ${attribute.name}
+#else
+            , ${attribute.name}
+#end
+#set($i=$i+1)
+#end
+        FROM ${class.tbName}
+        WHERE 1=1
+#if($class.attributes.size() > 1)
+        <isEqual prepend="AND" property="searchCondition" compareValue="0">
+            ${class.attributes.get(1).name} LIKE '%' || #searchKeyword# || '%'
+        </isEqual>
+#end
+#if($class.attributes.size() > 2)
+        <isEqual prepend="AND" property="searchCondition" compareValue="1">
+            ${class.attributes.get(2).name} LIKE '%' || #searchKeyword# || '%'
+        </isEqual>
+#end
+        ORDER BY
+#set($i=0)
+#foreach($attribute in $class.primaryKeys)
+#if($i == 0)
+            ${attribute.name} DESC
+#else
+            , ${attribute.name} DESC
+#end
+#set($i=$i+1)
+#end
+        LIMIT #recordCountPerPage# OFFSET #firstIndex#
+#elseif($vendor == "Oracle")
+        SELECT
+    #set($i=0)
+    #foreach($attribute in $class.attributes)
+        #if($i == 0)
+            A.${attribute.name}
+        #else
+            , A.${attribute.name}
+        #end
+        #set($i=$i+1)
+    #end
+       FROM
+        (
+            SELECT
+    #set($i=0)
+    #foreach($attribute in $class.attributes)
+        #if($i == 0)
+                ${attribute.name}
+        #else
+                , ${attribute.name}
+        #end
+        #set($i=$i+1)
+    #end
+                , ROWNUM
+            FROM ${class.tbName}
+            WHERE 1=1
+    #if($class.attributes.size() > 1)
+            <isEqual prepend="AND" property="searchCondition" compareValue="0">
+                ${class.attributes.get(1).name} LIKE '%' || #searchKeyword# || '%'
+            </isEqual>
+    #end
+    #if($class.attributes.size() > 2)
+            <isEqual prepend="AND" property="searchCondition" compareValue="1">
+                ${class.attributes.get(2).name} LIKE '%' || #searchKeyword# || '%'
+            </isEqual>
+    #end
+            ORDER BY
+    #set($i=0)
+    #foreach($attribute in $class.primaryKeys)
+        #if($i == 0)
+                ${attribute.name} DESC
+        #else
+              , ${attribute.name} DESC
+        #end
+        #set($i=$i+1)
+    #end
+        ) A
+        WHERE ROWNUM BETWEEN #firstIndex# AND #recordCountPerPage#
+#elseif($vendor == "MySQL")
+        SELECT
+    #set($i=0)
+    #foreach($attribute in $class.attributes)
+        #if($i == 0)
+            ${attribute.name}
+        #else
+            , ${attribute.name}
+        #end
+        #set($i=$i+1)
+    #end
+        FROM ${class.tbName}
+        WHERE 1=1
+    #if($class.attributes.size() > 1)
+        <isEqual prepend="AND" property="searchCondition" compareValue="0">
+            ${class.attributes.get(1).name} LIKE CONCAT('%',#searchKeyword#,'%')
+        </isEqual>
+    #end
+    #if($class.attributes.size() > 2)
+        <isEqual prepend="AND" property="searchCondition" compareValue="1">
+            ${class.attributes.get(2).name} LIKE CONCAT('%',#searchKeyword#,'%')
+        </isEqual>
+    #end
+        ORDER BY
+    #set($i=0)
+    #foreach($attribute in $class.primaryKeys)
+        #if($i == 0)
+            ${attribute.name} DESC
+        #else
+            , ${attribute.name} DESC
+        #end
+        #set($i=$i+1)
+    #end
+        limit #firstIndex#, #recordCountPerPage#
+#elseif($vendor == "PostgreSQL")
+        SELECT
+#set($i=0)
+#foreach($attribute in $class.attributes)
+#if($i == 0)
+            ${attribute.name}
+#else
+            , ${attribute.name}
+#end
+#set($i=$i+1)
+#end
+        FROM ${class.tbName}
+        ORDER BY
+#set($i=0)
+#foreach($attribute in $class.primaryKeys)
+#if($i == 0)
+            ${attribute.name} DESC
+#else
+            , ${attribute.name} DESC
+#end
+#set($i=$i+1)
+#end
+#else
+#end
+    </select>
+
+## ##################################################################################################
+    <select id="${selectListQueryId}" parameterClass="${searchVOAlias}" resultMap="${resultMapId}">
+#if($vendor == "HSQLDB")
+        SELECT
+#set($i=0)
+#foreach($attribute in $class.attributes)
+#if($i == 0)
+            ${attribute.name}
+#else
+            , ${attribute.name}
+#end
+#set($i=$i+1)
+#end
+        FROM ${class.tbName}
+        WHERE 1=1
+#if($class.attributes.size() > 1)
+        <isEqual prepend="AND" property="searchCondition" compareValue="0">
+            ${class.attributes.get(1).name} LIKE '%' || #searchKeyword# || '%'
+        </isEqual>
+#end
+#if($class.attributes.size() > 2)
+        <isEqual prepend="AND" property="searchCondition" compareValue="1">
+            ${class.attributes.get(2).name} LIKE '%' || #searchKeyword# || '%'
+        </isEqual>
+#end
+        ORDER BY
+#set($i=0)
+#foreach($attribute in $class.primaryKeys)
+#if($i == 0)
+            ${attribute.name} DESC
+#else
+            , ${attribute.name} DESC
+#end
+#set($i=$i+1)
+#end
+        LIMIT #recordCountPerPage# OFFSET #firstIndex#
+#elseif($vendor == "Oracle")
+        SELECT
+    #set($i=0)
+    #foreach($attribute in $class.attributes)
+        #if($i == 0)
+            A.${attribute.name}
+        #else
+            , A.${attribute.name}
+        #end
+        #set($i=$i+1)
+    #end
+       FROM
+        (
+            SELECT
+    #set($i=0)
+    #foreach($attribute in $class.attributes)
+        #if($i == 0)
+                ${attribute.name}
+        #else
+                , ${attribute.name}
+        #end
+        #set($i=$i+1)
+    #end
+                , ROWNUM
+            FROM ${class.tbName}
+            WHERE 1=1
+    #if($class.attributes.size() > 1)
+            <isEqual prepend="AND" property="searchCondition" compareValue="0">
+                ${class.attributes.get(1).name} LIKE '%' || #searchKeyword# || '%'
+            </isEqual>
+    #end
+    #if($class.attributes.size() > 2)
+            <isEqual prepend="AND" property="searchCondition" compareValue="1">
+                ${class.attributes.get(2).name} LIKE '%' || #searchKeyword# || '%'
+            </isEqual>
+    #end
+            ORDER BY
+    #set($i=0)
+    #foreach($attribute in $class.primaryKeys)
+        #if($i == 0)
+                ${attribute.name} DESC
+        #else
+              , ${attribute.name} DESC
+        #end
+        #set($i=$i+1)
+    #end
+        ) A
+        WHERE ROWNUM BETWEEN #firstIndex# AND #recordCountPerPage#
+#elseif($vendor == "MySQL")
+        SELECT
+    #set($i=0)
+    #foreach($attribute in $class.attributes)
+        #if($i == 0)
+            ${attribute.name}
+        #else
+            , ${attribute.name}
+        #end
+        #set($i=$i+1)
+    #end
+        FROM ${class.tbName}
+        WHERE 1=1
+    #if($class.attributes.size() > 1)
+        <isEqual prepend="AND" property="searchCondition" compareValue="0">
+            ${class.attributes.get(1).name} LIKE CONCAT('%',#searchKeyword#,'%')
+        </isEqual>
+    #end
+    #if($class.attributes.size() > 2)
+        <isEqual prepend="AND" property="searchCondition" compareValue="1">
+            ${class.attributes.get(2).name} LIKE CONCAT('%',#searchKeyword#,'%')
+        </isEqual>
+    #end
+        ORDER BY
+    #set($i=0)
+    #foreach($attribute in $class.primaryKeys)
+        #if($i == 0)
+            ${attribute.name} DESC
+        #else
+            , ${attribute.name} DESC
+        #end
+        #set($i=$i+1)
+    #end
+        limit #firstIndex#, #recordCountPerPage#
+#elseif($vendor == "PostgreSQL")
+        SELECT
+#set($i=0)
+#foreach($attribute in $class.attributes)
+#if($i == 0)
+            ${attribute.name}
+#else
+            , ${attribute.name}
+#end
+#set($i=$i+1)
+#end
+        FROM ${class.tbName}
+        WHERE 1=1
+        <isNotEqual prepend="" property="searchKeyword" compareValue="">
+#if($class.primaryKeys.size() > 0)
+            <isEqual prepend="AND" property="searchCondition" compareValue="0">
+                ${class.primaryKeys.get(0).name} = int4(#searchKeyword#)
+            </isEqual>
+#end
+#if($class.attributes.size() > 0)
+#foreach($attribute in $class.attributes)
+#if($attribute.javaType == "String")
+            <isEqual prepend="AND" property="searchCondition" compareValue="1">
+                ${attribute.name} LIKE '%' || #searchKeyword# || '%'
+            </isEqual>
+#break;
+#end
+#end
+#end
+        </isNotEqual>
+        ORDER BY
+#set($i=0)
+#foreach($attribute in $class.primaryKeys)
+#if($i == 0)
+            ${attribute.name} DESC
+#else
+            , ${attribute.name} DESC
+#end
+#set($i=$i+1)
+#end
+        LIMIT #recordCountPerPage# OFFSET #firstIndex#
+#else
+#end
+    </select>
+
+## ##################################################################################################   
+    <select id="${selectListTotCntQueryId}" parameterClass="${searchVOAlias}" resultClass="int">
+#if($vendor == "HSQLDB")
+        SELECT COUNT(*) totcnt
+        FROM ${class.tbName}
+        WHERE 1=1
+    #if($class.attributes.size() > 1)
+        <isEqual prepend="AND" property="searchCondition" compareValue="0">
+            ${class.attributes.get(1).name} LIKE '%' || #searchKeyword# || '%'
+        </isEqual>
+    #end
+    #if($class.attributes.size() > 2)
+        <isEqual prepend="AND" property="searchCondition" compareValue="1">
+            ${class.attributes.get(2).name} LIKE '%' || #searchKeyword# || '%'
+        </isEqual>
+    #end
+#elseif($vendor == "Oracle")
+        SELECT COUNT(*) totcnt
+        FROM ${class.tbName}
+        WHERE 1=1
+    #if($class.attributes.size() > 1)
+        <isEqual prepend="AND" property="searchCondition" compareValue="0">
+            ${class.attributes.get(1).name} LIKE '%' || #searchKeyword# || '%'
+        </isEqual>
+    #end
+    #if($class.attributes.size() > 2)
+        <isEqual prepend="AND" property="searchCondition" compareValue="1">
+            ${class.attributes.get(2).name} LIKE '%' || #searchKeyword# || '%'
+        </isEqual>
+    #end
+#elseif($vendor == "MySQL")
+        SELECT COUNT(*) totcnt
+        FROM ${class.tbName}
+        WHERE 1=1
+    #if($class.attributes.size() > 1)
+        <isEqual prepend="AND" property="searchCondition" compareValue="0">
+            ${class.attributes.get(1).name} LIKE CONCAT('%',#searchKeyword#,'%')
+        </isEqual>
+    #end
+    #if($class.attributes.size() > 2)
+        <isEqual prepend="AND" property="searchCondition" compareValue="1">
+            ${class.attributes.get(2).name} LIKE CONCAT('%',#searchKeyword#,'%')
+        </isEqual>
+    #end
+#elseif($vendor == "PostgreSQL")
+        SELECT COUNT(*) totcnt
+        FROM ${class.tbName}
+        WHERE 1=1
+        <isNotEqual prepend="" property="searchKeyword" compareValue="">
+#if($class.primaryKeys.size() > 0)
+            <isEqual prepend="AND" property="searchCondition" compareValue="0">
+                ${class.primaryKeys.get(0).name} = int4(#searchKeyword#)
+            </isEqual>
+#end
+#if($class.attributes.size() > 0)
+#foreach($attribute in $class.attributes)
+#if($attribute.javaType == "String")
+            <isEqual prepend="AND" property="searchCondition" compareValue="1">
+                ${attribute.name} LIKE '%' || #searchKeyword# || '%'
+            </isEqual>
+#break;
+#end
+#end
+#end
+        </isNotEqual>
+#else
+#end
+    </select>
+
+</sqlMap>

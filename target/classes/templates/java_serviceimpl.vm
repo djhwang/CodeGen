@@ -1,0 +1,127 @@
+## ServiceImpl.vm
+#set($voPackage="${env.voPackage}")
+#set($voClassName="${class.pcName}VO")
+#set($defaultVoClassName="DefaultVO")
+#set($commonPackage="${env.commonPackage}")
+#set($daoPackage="${env.daoPackage}")
+#set($daoClassName="${class.pcName}DAO")
+#set($daoName="${class.ccName}DAO")
+#set($daoInstanceName="${class.ccName}DAO")
+#set($servicePackage="${env.servicePackage}")
+#set($serviceClassName="${class.pcName}Service")
+#set($serviceImplPackage="${env.serviceImplPackage}")
+#set($serviceImplClassName="${class.pcName}ServiceImpl")
+#set($serviceName="${class.ccName}Service")
+##
+##
+#set($insertMethodName="insert")
+#set($updateMethodName="update")
+#set($deleteMethodName="delete")
+#set($selectMethodName="select")
+#set($selectListAllMethodName="selectListAll")
+#set($selectListMethodName="selectList")
+#set($selectListTotCntMethodName="selectListTotCnt")
+##
+##
+/**
+ * @Class Name : ${serviceImplClassName}.java
+ * @Description : ${class.pcName} Business Implement class
+ * @Modification Information
+ *
+ * @author ${env.author}
+ * @since ${env.createDate}
+ * @version 1.0
+ * @see
+ *  
+ *  Copyright ⓒ 2011 LG Electronics. all right reserved.
+ */
+package ${serviceImplPackage};
+
+import java.util.List;
+
+import javax.annotation.Resource;
+import org.springframework.stereotype.Service;
+
+import ${servicePackage}.${serviceClassName};
+import ${commonPackage}.vo.${defaultVoClassName};
+import ${voPackage}.${voClassName};
+import ${daoPackage}.${daoClassName};
+
+@Service("${serviceName}")
+public class ${serviceImplClassName} implements ${serviceClassName} {
+
+    @Resource(name="${daoInstanceName}")
+    private ${daoClassName} ${daoInstanceName};
+    
+
+    /**
+     * ${class.name}을 등록한다.
+     * @param vo - 등록할 정보가 담긴 ${voClassName}
+     * @return 등록 결과
+     * @exception Exception
+     */
+    public int ${insertMethodName}(${voClassName} vo) throws Exception {
+        return ${daoInstanceName}.${insertMethodName}(vo);
+    }
+
+    /**
+     * ${class.name}을 수정한다.
+     * @param vo - 수정할 정보가 담긴 ${voClassName}
+     * @return int형
+     * @exception Exception
+     */
+    public int ${updateMethodName}(${voClassName} vo) throws Exception {
+        return ${daoInstanceName}.${updateMethodName}(vo);
+    }
+
+    /**
+     * ${class.name}을 삭제한다.
+     * @param vo - 삭제할 정보가 담긴 ${voClassName}
+     * @return int형 
+     * @exception Exception
+     */
+    public int ${deleteMethodName}(${voClassName} vo) throws Exception {
+        return ${daoInstanceName}.${deleteMethodName}(vo);
+    }
+
+    /**
+     * ${class.name}을 조회한다.
+     * @param vo - 조회할 정보가 담긴 ${voClassName}
+     * @return 조회한 ${class.name}
+     * @exception Exception
+     */
+    public ${voClassName} ${selectMethodName}(${voClassName} vo) throws Exception {
+        return ${daoInstanceName}.${selectMethodName}(vo);
+    }
+
+    /**
+     * ${class.name} 목록을 조회한다.
+     * @param searchVO - 조회할 정보가 담긴 VO
+     * @return ${class.name} 목록
+     * @exception Exception
+     */
+    public List ${selectListAllMethodName}(${defaultVoClassName} searchVO) throws Exception {
+        return ${daoInstanceName}.${selectListAllMethodName}(searchVO);
+    }
+    
+    /**
+     * ${class.name} 목록을 조회한다.
+     * @param searchVO - 조회할 정보가 담긴 VO
+     * @return ${class.name} 목록
+     * @exception Exception
+     */
+    public List ${selectListMethodName}(${defaultVoClassName} searchVO) throws Exception {
+        return ${daoInstanceName}.${selectListMethodName}(searchVO);
+    }
+
+    /**
+     * ${class.name} 총 갯수를 조회한다.
+     * @param searchVO - 조회할 정보가 담긴 VO
+     * @return ${class.name} 총 갯수
+     * @exception
+     */
+    public int ${selectListTotCntMethodName}(${defaultVoClassName} searchVO) {
+        return ${daoInstanceName}.${selectListTotCntMethodName}(searchVO);
+    }
+    
+}

@@ -1,0 +1,210 @@
+## Controller.vm
+#set($voPackage="${env.voPackage}")
+#set($voClassName="${class.pcName}VO")
+#set($defaultVoClassName="DefaultVO")
+#set($commonPackage="${env.commonPackage}")
+#set($voInstanceName="${class.ccName}VO")
+#set($servicePackage="${env.servicePackage}")
+#set($serviceClassName="${class.pcName}Service")
+#set($serviceName="${class.ccName}Service")
+#set($serviceInstanceName="${class.ccName}Service")
+#set($controllerPackage="${env.controllerPackage}")
+#set($controllerClassName="${class.pcName}Controller")
+##
+##
+#set($listInstanceName="${class.ccName}List")
+#set($insertMethodName="insert")
+#set($updateMethodName="update")
+#set($deleteMethodName="delete")
+#set($selectMethodName="select")
+#set($selectListMethodName="selectList")
+#set($selectListTotCntMethodName="selectListTotCnt")
+##
+##
+#set($updateViewMethodName="update${class.pcName}View")
+#set($addMethodName="add${class.pcName}")
+#set($addViewMethodName="add${class.pcName}View")
+##
+#set($listPath="/${class.ccName}/list${class.pcName}.do")
+#set($addViewPath="/${class.ccName}/add${class.pcName}View.do")
+#set($addPath="/${class.ccName}/add${class.pcName}.do")
+#set($selectPath="/${class.ccName}/select${class.pcName}.do")
+#set($updatePath="/${class.ccName}/update${class.pcName}.do")
+#set($updateViewPath="/${class.ccName}/update${class.pcName}View.do")
+#set($deletePath="/${class.ccName}/delete${class.pcName}.do")
+##
+#set($listView="/${class.ccName}/list${class.pcName}")
+#set($registerView="/${class.ccName}/view${class.pcName}")
+##
+##
+/**
+ * @Class Name : ${controllerClassName}.java
+ * @Description : ${class.pcName} Controller class
+ * @Modification Information
+ *
+ * @author ${env.author}
+ * @since ${env.createDate}
+ * @version 1.0
+ * @see
+ *  
+ *  Copyright ⓒ 2011 LG Electronics. all right reserved.
+ */
+/*------------------------------------------------------------------------------
+ *                  Change history                       
+ *------------------------------------------------------------------------------
+ * $$Log$$                                                                  
+ *------------------------------------------------------------------------------
+ */ 
+package ${controllerPackage};
+
+import java.util.List;
+
+import javax.annotation.Resource;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.SessionAttributes;
+import org.springframework.web.bind.support.SessionStatus;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.springmodules.validation.commons.DefaultBeanValidator;
+import org.springframework.validation.BindingResult;
+
+import com.lge.supersign.util.message.CommonMessageSource;
+import com.lge.supersign.util.tags.pagination.PaginationInfo;
+import com.lge.supersign.util.props.PropertyService;
+
+import ${servicePackage}.${serviceClassName};
+import ${commonPackage}.vo.${defaultVoClassName};
+import ${voPackage}.${voClassName};
+
+@Controller
+public class ${controllerClassName} {
+
+    @Resource(name = "${serviceName}")
+    private ${serviceClassName} ${serviceInstanceName};
+    
+    @Resource(name = "commonMessageSource")
+    CommonMessageSource commonMessageSource;
+
+    @Resource(name = "propertiesService")
+    protected PropertyService propertiesService;
+
+    /** Validator */
+    @Resource(name = "beanValidator")
+    protected DefaultBeanValidator beanValidator;
+
+    private Log _logger = LogFactory.getLog(this.getClass());
+    
+    /**
+     * ${class.name} 목록을 조회한다. (pagination)
+     * @param searchVO - 조회할 정보가 담긴 ${defaultVoClassName}
+     * @return "${listView}"
+     * @exception Exception
+     */
+    @RequestMapping(value="${listPath}")
+    public String ${selectListMethodName}(@ModelAttribute("searchVO") ${defaultVoClassName} searchVO, 
+            ModelMap model)
+            throws Exception {
+        
+        /** pageUnit, pageSize from properties */
+        searchVO.setPageUnit(propertiesService.getInt("pageUnit"));
+        searchVO.setPageSize(propertiesService.getInt("pageSize"));
+        
+        /** pagination */
+        PaginationInfo paginationInfo = new PaginationInfo();
+        paginationInfo.setCurrentPageNo(searchVO.getPageIndex());
+        paginationInfo.setRecordCountPerPage(searchVO.getPageUnit());
+        paginationInfo.setPageSize(searchVO.getPageSize());
+        
+        searchVO.setFirstIndex(paginationInfo.getFirstRecordIndex());
+        searchVO.setLastIndex(paginationInfo.getLastRecordIndex());
+        searchVO.setRecordCountPerPage(paginationInfo.getRecordCountPerPage());
+        
+        List ${listInstanceName} = ${serviceInstanceName}.${selectListMethodName}(searchVO);
+        model.addAttribute("${listInstanceName}", ${listInstanceName});
+        
+        int totCnt = ${serviceInstanceName}.${selectListTotCntMethodName}(searchVO);
+        paginationInfo.setTotalRecordCount(totCnt);
+        model.addAttribute("paginationInfo", paginationInfo);
+        
+        return "${listView}";
+    } 
+    
+    @RequestMapping("${addViewPath}")
+    public String ${addViewMethodName}(
+            @ModelAttribute("searchVO") ${defaultVoClassName} searchVO, Model model)
+            throws Exception {
+        model.addAttribute("${voInstanceName}", new ${voClassName}());
+        return "${registerView}";
+    }
+    
+    @RequestMapping("${addPath}")
+    public String ${addMethodName}(
+            @ModelAttribute("searchVO") ${defaultVoClassName} searchVO,
+            ${voClassName} ${voInstanceName}, BindingResult bindingResult, Model model, SessionStatus status)
+            throws Exception {
+
+        // validate
+        beanValidator.validate(${voInstanceName}, bindingResult);
+
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("${voInstanceName}", ${voInstanceName});
+            return "${registerView}";
+        }
+    
+        ${serviceInstanceName}.${insertMethodName}(${voInstanceName});
+        status.setComplete();
+        return "forward:${listPath}";
+    }
+    
+    @RequestMapping("${updateViewPath}")
+    public String ${updateViewMethodName}(
+#foreach($attribute in $class.primaryKeys)
+            @RequestParam("${attribute.ccName}") ${attribute.javaType} ${attribute.ccName} ,
+#end    
+            @ModelAttribute("searchVO") ${defaultVoClassName} searchVO, Model model)
+            throws Exception {
+        ${voClassName} ${voInstanceName} = new ${voClassName}();
+#foreach($attribute in $class.primaryKeys)        
+        ${voInstanceName}.set${attribute.pcName}(${attribute.ccName});
+#end
+        // 변수명은 CoC 에 따라 ${voInstanceName}
+        model.addAttribute(${selectMethodName}(${voInstanceName}, searchVO));
+        return "${registerView}";
+    }
+
+    @RequestMapping("${selectPath}")
+    public @ModelAttribute("${voInstanceName}")
+    ${voClassName} ${selectMethodName}(
+            ${voClassName} ${voInstanceName},
+            @ModelAttribute("searchVO") ${defaultVoClassName} searchVO) throws Exception {
+        return ${serviceInstanceName}.${selectMethodName}(${voInstanceName});
+    }
+
+    @RequestMapping("${updatePath}")
+    public String ${updateMethodName}(
+            ${voClassName} ${voInstanceName},
+            @ModelAttribute("searchVO") ${defaultVoClassName} searchVO, SessionStatus status)
+            throws Exception {
+        ${serviceInstanceName}.${updateMethodName}(${voInstanceName});
+        status.setComplete();
+        return "forward:${listPath}";
+    }
+    
+    @RequestMapping("${deletePath}")
+    public String ${deleteMethodName}(
+            ${voClassName} ${voInstanceName},
+            @ModelAttribute("searchVO") ${defaultVoClassName} searchVO, SessionStatus status)
+            throws Exception {
+        ${serviceInstanceName}.${deleteMethodName}(${voInstanceName});
+        status.setComplete();
+        return "forward:${listPath}";
+    }
+
+}

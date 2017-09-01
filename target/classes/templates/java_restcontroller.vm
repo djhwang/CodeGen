@@ -1,0 +1,240 @@
+## RestController.vm
+#set($voPackage="${env.voPackage}")
+#set($voClassName="${class.pcName}VO")
+#set($defaultVoClassName="DefaultVO")
+#set($commonPackage="${env.commonPackage}")
+#set($voInstanceName="${class.ccName}VO")
+#set($servicePackage="${env.servicePackage}")
+#set($serviceClassName="${class.pcName}Service")
+#set($serviceName="${class.ccName}Service")
+#set($serviceInstanceName="${class.ccName}Service")
+#set($controllerPackage="${env.controllerPackage}")
+#set($controllerClassName="${class.pcName}RestController")
+##
+##
+#set($listInstanceName="${class.ccName}List")
+#set($insertMethodName="insert")
+#set($updateMethodName="update")
+#set($deleteMethodName="delete")
+#set($selectMethodName="select")
+#set($selectListAllMethodName="selectListAll")
+#set($selectListMethodName="selectList")
+#set($selectListTotCntMethodName="selectListTotCnt")
+##
+##
+#set($updateViewMethodName="update${class.pcName}View")
+#set($addMethodName="add${class.pcName}")
+#set($addViewMethodName="add${class.pcName}View")
+##
+#set($headers="Accept=application/xml, application/json")
+#set($listPath="/${class.ccName}")
+##
+/**
+ * @Class Name : ${controllerClassName}.java
+ * @Description : ${class.pcName} RESTful Controller class
+ * @Modification Information
+ *
+ * @author ${env.author}
+ * @since ${env.createDate}
+ * @version 1.0
+ * @see
+ *  
+ *  Copyright ⓒ 2011 LG Electronics. all right reserved.
+ */
+ 
+package ${controllerPackage};
+
+import java.util.List;
+
+import javax.annotation.Resource;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.springmodules.validation.commons.DefaultBeanValidator;
+import org.springframework.validation.BindingResult;
+
+import com.lge.supersign.util.message.CommonMessageSource;
+import com.lge.supersign.util.tags.pagination.PaginationInfo;
+import com.lge.supersign.util.props.PropertyService;
+
+import ${servicePackage}.${serviceClassName};
+import ${commonPackage}.vo.CollectionVO;
+import ${commonPackage}.data.RestResponse;
+import ${commonPackage}.vo.${defaultVoClassName};
+import ${voPackage}.${voClassName};
+
+@Controller
+public class ${controllerClassName} {
+
+    @Resource(name = "${serviceName}")
+    private ${serviceClassName} ${serviceInstanceName};
+    
+    @Resource(name = "commonMessageSource")
+    CommonMessageSource commonMessageSource;
+
+    @Resource(name = "propertiesService")
+    protected PropertyService propertiesService;
+
+    /** Validator */
+    @Resource(name = "beanValidator")
+    protected DefaultBeanValidator beanValidator;
+
+    private Log _logger = LogFactory.getLog(this.getClass());
+    
+    private RestResponse response = new RestResponse();
+    
+    /**
+     * ${class.name} 목록을 조회한다. (pagination)
+     * @param searchVO - 조회할 정보가 담긴 ${defaultVoClassName}
+     * @return "CollectionVO"
+     * @exception Exception
+     */
+    @RequestMapping(method=RequestMethod.GET, value="${listPath}", headers="${headers}")
+    public @ResponseBody CollectionVO ${selectListAllMethodName}(@ModelAttribute("searchVO") ${defaultVoClassName} searchVO)
+            throws Exception {
+        
+        List ${listInstanceName} = ${serviceInstanceName}.${selectListAllMethodName}(searchVO);
+
+        return new CollectionVO(${listInstanceName});
+    } 
+    
+    /**
+     * ${class.name} 목록을 조회한다. (pagination)
+     * @param searchVO - 조회할 정보가 담긴 ${defaultVoClassName}
+     * @return "CollectionVO"
+     * @exception Exception
+     */
+    @RequestMapping(method=RequestMethod.GET, value="${listPath}Search", headers="${headers}")
+    public @ResponseBody CollectionVO ${selectListMethodName}(@ModelAttribute("searchVO") ${defaultVoClassName} searchVO)
+            throws Exception {
+        
+        searchVO.setPageUnit(propertiesService.getInt("pageUnit"));
+        searchVO.setPageSize(propertiesService.getInt("pageSize"));
+        
+        /** pagination */
+        PaginationInfo paginationInfo = new PaginationInfo();
+        paginationInfo.setCurrentPageNo(searchVO.getPageIndex());
+        paginationInfo.setRecordCountPerPage(searchVO.getPageUnit());
+        paginationInfo.setPageSize(searchVO.getPageSize());
+        
+        searchVO.setFirstIndex(paginationInfo.getFirstRecordIndex());
+        searchVO.setLastIndex(paginationInfo.getLastRecordIndex());
+        searchVO.setRecordCountPerPage(paginationInfo.getRecordCountPerPage());
+        
+        List ${listInstanceName} = ${serviceInstanceName}.${selectListMethodName}(searchVO);
+
+        return new CollectionVO(${listInstanceName});
+    } 
+
+#if($class.primaryKeys.size() > 0)
+    @RequestMapping(method=RequestMethod.GET, value="${listPath}/{${class.primaryKeys.get(0).ccName}}", headers="${headers}")
+    public @ResponseBody ${voClassName} ${selectMethodName}(@PathVariable ${class.primaryKeys.get(0).javaType} ${class.primaryKeys.get(0).ccName}) throws Exception {
+        ${voClassName} ${voInstanceName} = new ${voClassName}();
+#foreach($attribute in $class.primaryKeys)
+        ${voInstanceName}.set${attribute.pcName}(${attribute.ccName});
+#end
+
+        return ${serviceInstanceName}.${selectMethodName}(${voInstanceName});
+    }
+#else
+    @RequestMapping(method=RequestMethod.GET, value="${listPath}/{${class.attributes.get(0).ccName}}", headers="${headers}")
+    public @ResponseBody ${voClassName} ${selectMethodName}(@PathVariable ${class.attributes.get(0).javaType} ${class.attributes.get(0).ccName}) throws Exception {
+        ${voClassName} ${voInstanceName} = new ${voClassName}();
+#foreach($attribute in $class.primaryKeys)
+        ${voInstanceName}.set${attribute.pcName}(${attribute.ccName});
+#end
+
+        return ${serviceInstanceName}.${selectMethodName}(${voInstanceName});
+    }
+#end
+    
+    @RequestMapping(method=RequestMethod.POST, value="${listPath}", headers="${headers}")
+    public @ResponseBody RestResponse ${addMethodName}(@RequestBody ${voClassName} vo) throws Exception {
+        try {
+#foreach($attribute in $class.primaryKeys)
+#if($attribute.javaType == "int")
+            vo.set${attribute.pcName}(Integer.parseInt(${serviceInstanceName}.${insertMethodName}(vo)));
+#else
+            vo.set${attribute.pcName}(${serviceInstanceName}.${insertMethodName}(vo));
+#end
+#end
+        } 
+        catch (Exception e) {
+            response.setErrorCode("-1");
+            response.setErrorMessage("INSERT ERROR");
+        }
+        
+        return response;
+    }
+
+#if($class.primaryKeys.size() > 0)
+    @RequestMapping(method=RequestMethod.PUT, value="${listPath}/{${class.primaryKeys.get(0).ccName}}", headers="${headers}")
+    public @ResponseBody RestResponse ${updateMethodName}(@RequestBody ${voClassName} vo, @PathVariable ${class.primaryKeys.get(0).javaType} ${class.primaryKeys.get(0).ccName}) throws Exception {
+        int errorCode = ${serviceInstanceName}.${updateMethodName}(vo);
+        
+        if (errorCode != 0) {
+            response.setErrorCode(String.valueOf(errorCode));
+            response.setErrorMessage("UPDATE ERROR");
+        }
+        
+        return response;
+    }
+#else
+    @RequestMapping(method=RequestMethod.PUT, value="${listPath}/{${class.attributes.get(0).ccName}}", headers="${headers}")
+    public @ResponseBody RestResponse ${updateMethodName}(@RequestBody ${voClassName} vo, @PathVariable ${class.attributes.get(0).javaType} ${class.attributes.get(0).ccName}) throws Exception {
+        int errorCode = ${serviceInstanceName}.${updateMethodName}(vo);
+        
+        if (errorCode != 0) {
+            response.setErrorCode(String.valueOf(errorCode));
+            response.setErrorMessage("UPDATE ERROR");
+        }
+        
+        return response;
+    }
+#end
+
+#if($class.primaryKeys.size() > 0)
+    @RequestMapping(method=RequestMethod.DELETE, value="${listPath}/{${class.primaryKeys.get(0).ccName}}", headers="${headers}")
+    public @ResponseBody RestResponse ${deleteMethodName}(@PathVariable ${class.primaryKeys.get(0).javaType} ${class.primaryKeys.get(0).ccName}) throws Exception {
+        ${voClassName} ${voInstanceName} = new ${voClassName}();
+#foreach($attribute in $class.primaryKeys)
+        ${voInstanceName}.set${attribute.pcName}(${attribute.ccName});
+#end
+        int errorCode = ${serviceInstanceName}.${deleteMethodName}(${voInstanceName});
+        
+        if (errorCode != 0) {
+            response.setErrorCode(String.valueOf(errorCode));
+            response.setErrorMessage("DELETE ERROR");
+        }
+        
+        return response;
+    }
+#else
+    @RequestMapping(method=RequestMethod.DELETE, value="${listPath}/{${class.attributes.get(0).ccName}}", headers="${headers}")
+    public @ResponseBody RestResponse ${deleteMethodName}(@PathVariable ${class.attributes.get(0).javaType} ${class.attributes.get(0).ccName}) throws Exception {
+        ${voClassName} ${voInstanceName} = new ${voClassName}();
+#foreach($attribute in $class.primaryKeys)
+        ${voInstanceName}.set${attribute.pcName}(${attribute.ccName});
+#end
+        int errorCode = ${serviceInstanceName}.${deleteMethodName}(${voInstanceName});
+        
+        if (errorCode != 0) {
+            response.setErrorCode(String.valueOf(errorCode));
+            response.setErrorMessage("DELETE ERROR");
+        }
+        
+        return response;
+    }
+#end
+}

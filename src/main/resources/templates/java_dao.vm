@@ -1,0 +1,135 @@
+## DAO.vm
+#set($voPackage="${env.voPackage}")
+#set($voClassName="${class.pcName}VO")
+#set($defaultVoClassName="DefaultVO")
+#set($commonPackage="${env.commonPackage}")
+#set($daoPackage="${env.daoPackage}")
+#set($daoClassName="${class.pcName}DAO")
+#set($daoName="${class.ccName}DAO")
+#set($daoInstanceName="${class.ccName}DAO")
+##
+##
+#set($insertMethodName="insert")
+#set($updateMethodName="update")
+#set($deleteMethodName="delete")
+#set($selectMethodName="select")
+#set($selectListAllMethodName="selectListAll")
+#set($selectListMethodName="selectList")
+#set($selectListTotCntMethodName="selectListTotCnt")
+##
+##
+#set($insertQueryId="${daoInstanceName}.insert${class.pcName}_S")
+#set($updateQueryId="${daoInstanceName}.update${class.pcName}_S")
+#set($deleteQueryId="${daoInstanceName}.delete${class.pcName}_S")
+#set($selectQueryId="${daoInstanceName}.select${class.pcName}_S")
+#set($selectListAllQueryId="${daoInstanceName}.select${class.pcName}ListAll_D")
+#set($selectListQueryId="${daoInstanceName}.select${class.pcName}List_D")
+#set($selectListTotCntQueryId="${daoInstanceName}.select${class.pcName}ListTotCnt_S")
+##
+##
+/**
+ * @Class Name : ${daoClassName}.java
+ * @Description : ${class.pcName} DAO Class
+ * @Modification Information
+ *
+ * @author ${env.author}
+ * @since ${env.createDate}
+ * @version 1.0
+ * @see
+ *  
+ *  Copyright ⓒ 2011 LG Electronics. all right reserved.
+ */
+package ${daoPackage};
+
+import java.util.List;
+
+import org.springframework.stereotype.Repository;
+
+import ${commonPackage}.dao.AbstractDAO;
+import ${commonPackage}.vo.${defaultVoClassName};
+import ${voPackage}.${voClassName};
+
+
+@Repository("${daoName}")
+public class ${daoClassName} extends AbstractDAO {
+
+    /**
+     * ${class.name}을 등록한다.
+     * @param vo - 등록할 정보가 담긴 ${voClassName}
+     * @return 등록 결과
+     * @exception Exception
+     */
+    public Integer ${insertMethodName}(${voClassName} vo) throws Exception {
+        return (Integer)insert("${insertQueryId}", vo);
+    }
+
+    /**
+     * ${class.name}을 수정한다.
+     * @param vo - 수정할 정보가 담긴 ${voClassName}
+     * @return void형
+     * @exception Exception
+     */
+    public int ${updateMethodName}(${voClassName} vo) throws Exception {
+        return update("${updateQueryId}", vo);
+    }
+
+    /**
+     * ${class.name}을 삭제한다.
+     * @param vo - 삭제할 정보가 담긴 ${voClassName}
+     * @return void형 
+     * @exception Exception
+     */
+    public int ${deleteMethodName}(${voClassName} vo) throws Exception {
+        return delete("${deleteQueryId}", vo);
+    }
+
+    /**
+     * ${class.name}을 조회한다.
+     * @param vo - 조회할 정보가 담긴 ${voClassName}
+     * @return 조회한 ${class.name}
+     * @exception Exception
+     */
+    public ${voClassName} ${selectMethodName}(${voClassName} vo) throws Exception {
+        return (${voClassName}) selectByPk("${selectQueryId}", vo);
+    }
+
+    /**
+     * ${class.name} 목록을 조회한다.
+     * @param searchMap - 조회할 정보가 담긴 Map
+     * @return ${class.name} 목록
+     * @exception Exception
+     */
+    public List ${selectListAllMethodName}(${defaultVoClassName} searchVO) throws Exception {
+        return list("${selectListAllQueryId}", searchVO);
+    }
+
+    /**
+     * ${class.name} 목록을 조회한다.
+     * @param searchMap - 조회할 정보가 담긴 Map
+     * @return ${class.name} 목록
+     * @exception Exception
+     */
+    public List ${selectListMethodName}(${defaultVoClassName} searchVO) throws Exception {
+        return list("${selectListQueryId}", searchVO);
+    }
+
+    /**
+     * ${class.name} 총 갯수를 조회한다.
+     * @param searchMap - 조회할 정보가 담긴 Map
+     * @return ${class.name} 총 갯수
+     * @exception
+     */
+    public int ${selectListTotCntMethodName}(${defaultVoClassName} searchVO) {
+        return (Integer)listTotCnt("${selectListTotCntQueryId}", searchVO);
+    }
+
+    /**
+     * custom method는 이 부분에 추가하세요.
+     * @param searchMap - 조회할 정보가 담긴 Map
+     * @return
+     * @exception
+     */
+    public int stub(${defaultVoClassName} searchVO) {
+        return (Integer)getSqlMapClientTemplate().queryForObject("${selectListTotCntQueryId}", searchVO);
+    }
+}

@@ -1,0 +1,49 @@
+## VO.vm
+#set($voPackage="${env.voPackage}")
+#set($voClassName="${class.pcName}VO")
+#set($defaultVoClassName="${class.pcName}DefaultVO")
+##
+##
+/**
+ * @Class Name : ${voClassName}.as
+ * @Description : ${class.pcName} VO class
+ * @Modification Information
+ *
+ * @author ${env.author}
+ * @since ${env.createDate}
+ * @version 1.0
+ * @see
+ *  
+ *  Copyright ⓒ 2011 LG Electronics. all right reserved.
+ */
+package $voPackage;
+{
+    import org.hamcrest.mxml.collection.InArray;
+
+    public class ${voClassName} {
+        /** Constructor */
+        public function ${voClassName}() {
+        }
+        
+#set($i=0)	
+#foreach($attribute in $class.attributes)
+        /** ${attribute.name} */
+        private var _${attribute.ccName} : ${attribute.asType};
+        
+#set($i=$i+1)
+#end
+##
+#set($i=0)	
+#foreach($attribute in $class.attributes)
+        public function get ${attribute.ccName}() : ${attribute.asType} {
+            return _${attribute.ccName};
+        }
+        
+        public function set ${attribute.ccName}(${attribute.ccName} : ${attribute.asType}) : void {
+            _${attribute.ccName} = ${attribute.ccName};
+        }
+    
+#set($i=$i+1)
+#end  
+    }
+}

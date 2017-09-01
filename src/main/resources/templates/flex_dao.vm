@@ -1,0 +1,101 @@
+## flex_DAO.vm
+#set($daPackage="${env.daPackage}")
+#set($daInterfaceName="I${class.pcName}DA")
+#set($daLocalImplName="${class.pcName}LocalDAImpl")
+#set($daRestImplName="${class.pcName}RestDAImpl")
+#
+#set($daoPackage="${env.daoPackage}")
+#set($daoClassName="${class.pcName}DAO")
+#set($daoName="${class.ccName}DAO")
+#set($daoInstanceName="${class.ccName}DAO")
+##
+##
+#set($insertMethodName="insertItem")
+#set($updateMethodName="updateItem")
+#set($deleteMethodName="deleteItem")
+#set($selectMethodName="selectItem")
+##
+##
+/**
+ * @Class Name : ${daoClassName}.as
+ * @Description : ${class.pcName} DAO Class
+ * @Modification Information
+ *
+ * @author ${env.author}
+ * @since ${env.createDate}
+ * @version 1.0
+ * @see
+ *  
+ *  Copyright ⓒ 2011 LG Electronics. all right reserved.
+ */
+package ${daoPackage}
+{
+    import ${daPackage}.${daInterfaceName};
+    import ${daPackage}.${daLocalImplName};
+    import ${daPackage}.${daRestImplName};
+    
+    public class ${daoClassName} extends AbstractDAO {
+        private static var _connType:String;
+        private var _DA:${daInterfaceName};
+        private var _localDAResourceURI:String = "${class.tbName}";
+        
+        /**
+         * Constructor
+         */
+        public function ${daoClassName}(_connectionType:String) {
+            _connType = _connectionType;
+            
+            if (_connType == "REST") {
+                //
+            }
+            else if (_connType == "LOCALDB") {
+                _DA = ${daLocalImplName}.getInstance(_localDAResourceURI);
+            }
+            else {
+                throw new Error("error in DAO");
+            }
+        }
+         
+         
+    
+        /**
+         * ${class.name}을 등록한다.
+         * @param vo - 등록할 정보가 담긴 ${voClassName}
+         * @return 등록 결과
+         * @exception Exception
+         */
+        override public function insertOperation(_vo:Object, insertResultEventHandler:Function, insertFaultEventHandler:Function):void {
+            _DA.${insertMethodName}(_vo, insertResultEventHandler, insertFaultEventHandler);
+        }
+    
+        /**
+         * ${class.name}을 수정한다.
+         * @param vo - 수정할 정보가 담긴 ${voClassName}
+         * @return void형
+         * @exception Exception
+         */
+        override public function updateOperation(_vo:Object, _idx:int, updateResultEventHandler:Function, updateFaultEventHandler:Function):void {
+            _DA.${updateMethodName}(_vo, _idx, updateResultEventHandler, updateFaultEventHandler);
+        }
+    
+        /**
+         * ${class.name}을 삭제한다.
+         * @param vo - 삭제할 정보가 담긴 ${voClassName}
+         * @return void형 
+         * @exception Exception
+         */
+        override public function deleteOperation(_idx:int, deleteResultEventHandler:Function, deleteFaultEventHandler:Function):void {
+            _DA.${deleteMethodName}(_idx, deleteResultEventHandler, deleteFaultEventHandler);
+        }
+    
+        /**
+         * ${class.name}을 조회한다.
+         * @param vo - 조회할 정보가 담긴 ${voClassName}
+         * @return 조회한 ${class.name}
+         * @exception Exception
+         */
+        override public function selectOperation(resultEventHandler:Function, faultEventHandler:Function):void {
+            _DA.${selectMethodName}(resultEventHandler, faultEventHandler);
+        }
+    }
+}

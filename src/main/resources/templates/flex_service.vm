@@ -1,0 +1,122 @@
+## flex_Service.vm
+##
+#set($daoPackage="${env.daoPackage}")
+#set($daoClassName="${class.pcName}DAO")
+#set($daoInstanceName="_${class.ccName}DAO")
+##
+##
+#set($servicePackage="${env.servicePackage}")
+#set($serviceClassName="${class.pcName}Service")
+##
+#set($insertMethodName="insertItem")
+#set($updateMethodName="updateItem")
+#set($deleteMethodName="deleteItem")
+#set($selectMethodName="selectItem")
+##
+##
+/**
+ * @Class Name : ${serviceClassName}.as
+ * @Description : ${class.pcName} Service Class
+ * @Modification Information
+ *
+ * @author ${env.author}
+ * @since ${env.createDate}
+ * @version 1.0
+ * @see
+ *  
+ *  Copyright ⓒ 2011 LG Electronics. all right reserved.
+*/
+    
+package ${servicePackage}
+{
+    import flash.events.SQLErrorEvent;
+    import flash.events.SQLEvent;
+    
+    import mx.controls.Alert;
+    import mx.effects.IAbstractEffect;
+    import mx.rpc.events.FaultEvent;
+    import mx.rpc.events.ResultEvent;
+
+    import ${daoPackage}.${daoClassName};    
+  
+    public class ${serviceClassName}
+    {
+        private var ${daoInstanceName}:${daoClassName};
+        private var _connType:String = "LOCALDB";
+        private var _getContentsSuccessOperation:Function;
+
+
+        /**
+         * Contructor
+         */
+        public function ${serviceClassName}()
+        {
+            ${daoInstanceName} = new ${daoClassName}(_connType); //Instantiation of DistributionDAO
+            
+        }
+        
+        /////////////////////////Method of getting Contents From Remoted Server//////////////////////////
+        public function selectOperation(selectResultEventHandler:Function, selectFaultEventHandler:Function):void{
+            ${daoInstanceName}.selectOperation(selectResultEventHandler, selectFaultEventHandler);
+        }
+        
+        ///////////////////Event Handler Method of Select Result From Remoted Server///////////////////////
+        /*
+        public function selectResultEventHandler(_event:Object):void{
+            Alert.show(_event as String);
+            trace("Event Result of player Controller : "+_event);
+        }
+        
+        //////////////////Event Handler Method of Select Fault From Remoted Server//////////////////////////
+        
+        public function selectFaultEventHandler(event:FaultEvent):void{
+            Alert.show(event.fault as String);
+            trace("Event Fault of player Controller : "+event.fault);
+        }*/
+        
+        /////////////////////////Method of insert Contents//////////////////////////
+        public function insertOperation(_vo:Object):void{
+            ${daoInstanceName}.insertOperation(_vo, insertResultEventHandler, insertFaultEventHandler);
+        }
+        
+        ///////////////////Event Handler Method of Insert success////////////////////////////////////
+        public function insertResultEventHandler(_event:String):void{
+            Alert.show("Insert success : "+_event);
+        }
+        
+        ///////////////////Event Handler Method of Insert Fail ////////////////////////////////////
+        public function insertFaultEventHandler(_event:String):void{
+            Alert.show(_event);
+        }
+        
+        /////////////////////////Method of update Contents//////////////////////////
+        public function updateOperation(_vo:Object, _idx:int):void{
+            ${daoInstanceName}.updateOperation(_vo, _idx, updateResultEventHandler, updateFaultEventHandler);   
+        }
+        
+        ///////////////////////Event Handler Method of Update Success/////////////////////////////
+        public function updateResultEventHandler(_event:String):void{
+            Alert.show("update success : "+_event);
+        }
+        
+        ///////////////////Event Handler Method of Update Fail ////////////////////////////////////
+        public function updateFaultEventHandler(_event:String):void{
+            Alert.show(_event);
+        }
+        
+        /////////////////////////Method of delete Contents//////////////////////////
+        public function deleteOperation(_idx:int):void{
+            ${daoInstanceName}.deleteOperation(_idx, deleteResultEventHandler, deleteFaultEventHandler);
+        }
+        
+        ////////////////////////////Event Handler Method of delete success/////////////////////////////
+        public function deleteResultEventHandler(_event:String):void{
+            Alert.show("delete success : "+_event);
+        }
+        
+        ///////////////////Event Handler Method of delete Fail ////////////////////////////////////
+        public function  deleteFaultEventHandler(_event:String):void{
+            Alert.show(_event);
+        }
+    }
+}

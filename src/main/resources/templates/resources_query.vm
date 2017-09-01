@@ -1,0 +1,76 @@
+## query.vm
+
+
+create table $class.Name (
+#foreach($att in $class.Attributes)	
+    $att.Name $att.Type,
+#end
+)
+
+
+INSERT INTO ${class.tbName} 
+#set($i=0)  
+#foreach($att in $class.attributes)
+#if($i == 0)
+    ( ${att.name}
+#elseif($i < ($class.attributes.size() - 1))
+    , ${att.name}
+#else
+    , ${att.name} )
+#end
+#set($i=$i+1)
+#end
+##
+#set($i=0)  
+#foreach($att in $class.attributes)
+#if($i == 0)
+    VALUES ( #${att.ccName}#
+#elseif($i < ($class.attributes.size() - 1))
+    , #${att.ccName}#
+#else
+    , #${att.ccName}# )
+#end
+#set($i=$i+1)
+#end
+
+
+
+## insert select
+SELECT
+'INSERT INTO ${class.tbName}  
+#set($i=0)  
+#foreach($att in $class.attributes)
+#if($i == 0)
+    ( ${att.name}
+#elseif($i < ($class.attributes.size() - 1))
+    , ${att.name}
+#else
+    , ${att.name} )
+#end
+#set($i=$i+1)
+#end
+VALUES('
+#set($i=0)  
+#foreach($att in $class.attributes)
+#if($i < ($class.attributes.size() - 1))
+    #if($att.javaType == 'String')
+    || '''' || COALESCE(${att.name}, 'NULL_STRING') || ''','
+    #else
+    || COALESCE(${att.name}, -999999999) || ','
+    #end
+#else
+    #if($att.javaType == 'String')
+    || '''' || COALESCE(${att.name}, 'NULL_STRING') || ''');'
+    #else
+    || COALESCE(${att.name}, -999999999) || ');'
+    #end
+#end
+#set($i=$i+1)
+#end
+FROM  ${class.tbName};
+
+
+SELECT 'INSERT INTO ${class.tbName} ( #set($i=0) #foreach($att in $class.attributes) #if($i < ($class.attributes.size() - 1)) ${att.name}, #else ${att.name} #end #set($i=$i+1) #end ) VALUES(' #set($i=0) #foreach($att in $class.attributes) #if($i < ($class.attributes.size() - 1)) #if($att.javaType == 'String') || '''' || COALESCE(${att.name}, 'NULL_STRING') || ''',' #else || COALESCE(${att.name}, -999999999) || ',' #end #else #if($att.javaType == 'String') || '''' || COALESCE(${att.name}, 'NULL_STRING') || ''');' #else || COALESCE(${att.name}, -999999999) || ');' #end #end #set($i=$i+1) #end FROM  ${class.tbName};
+
+## sequence init
+select setval('${class.tbName}_seq', (select max(${class.attributes.get(0).name}) from ${class.tbName})+1);

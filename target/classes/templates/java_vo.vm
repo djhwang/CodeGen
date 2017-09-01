@@ -1,0 +1,54 @@
+## VO.vm
+#set($voPackage="${env.voPackage}")
+#set($voClassName="${class.pcName}VO")
+#set($commonPackage="${env.commonPackage}")
+#set($defaultVoClassName="DefaultVO")
+##
+##
+/**
+ * @Class Name : ${voClassName}.java
+ * @Description : ${class.pcName} VO class
+ * @Modification Information
+ *
+ * @author ${env.author}
+ * @since ${env.createDate}
+ * @version 1.0
+ * @see
+ *  
+ *  Copyright ⓒ 2011 LG Electronics. all right reserved.
+ */
+package $voPackage;
+
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import ${commonPackage}.vo.${defaultVoClassName};
+
+
+@XmlRootElement(name="${class.ccName}")
+public class ${voClassName} extends ${defaultVoClassName}{
+    private static final long serialVersionUID = 1L;
+    
+#set($i=0)	
+#foreach($attribute in $class.attributes)
+    private ${attribute.javaType} ${attribute.ccName};      /** ${attribute.name} */
+#set($i=$i+1)
+#end
+##
+
+#set($i=0)	
+#foreach($attribute in $class.attributes)
+#if($attribute.javaType == "java.sql.Timestamp")
+    @XmlJavaTypeAdapter(TimestampAdapter.class)
+##if($attribute.javaType == "java.util.Date")
+##    @XmlJavaTypeAdapter(DateAdapter.class)
+#end
+    public ${attribute.javaType} get${attribute.pcName}() {
+        return this.${attribute.ccName};
+    }
+    public void set${attribute.pcName}(${attribute.javaType} ${attribute.ccName}) {
+        this.${attribute.ccName} = ${attribute.ccName};
+    }
+    
+#set($i=$i+1)
+#end  
+}
